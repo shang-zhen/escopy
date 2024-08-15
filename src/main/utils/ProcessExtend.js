@@ -1,5 +1,6 @@
-import Command from '@/main/utils/Command'
+import Shell from '@/main/utils/Shell'
 import { isMacOS, isWindows } from '@/main/utils/utils'
+import { PowerShell } from '@/main/utils/constant'
 
 export default class ProcessExtend {
     /**
@@ -11,10 +12,10 @@ export default class ProcessExtend {
         try {
             if (isWindows) {
                 //taskkill杀不存在的进程会有标准错误，从而引发异常
-                await Command.exec(`taskkill /f /t /pid ${pid}`);
+                await Shell.exec(`taskkill /f /t /pid ${pid}`);
             } else {
                 //pkill杀不存在的进程会有标准错误，从而引发异常
-                await Command.sudoExec(`kill ${pid}`);
+                await Shell.sudoExec(`kill ${pid}`);
             }
             // eslint-disable-next-line no-empty
         } catch {
@@ -31,10 +32,10 @@ export default class ProcessExtend {
         try {
             if (isWindows) {
                 //taskkill杀不存在的进程会有标准错误，从而引发异常
-                await Command.exec(`taskkill /f /t /im ${name}.exe`);
+                await Shell.exec(`taskkill /f /t /im ${name}.exe`);
             } else {
                 //pkill杀不存在的进程会有标准错误，从而引发异常
-                await Command.sudoExec(`pkill ${name}`);
+                await Shell.sudoExec(`pkill ${name}`);
             }
             // eslint-disable-next-line no-empty
         } catch {
@@ -53,19 +54,23 @@ export default class ProcessExtend {
 
     static async getPathByPid(pid) {
         try {
-            let commandStr, resStr, path;
+            pid = parseInt(pid)
+            let path
 
             if (isWindows) {
-                commandStr = `(Get-Process -Id ${pid}).Path`;
-                resStr = await Command.exec(commandStr, {shell: 'powershell'});
+                const hmc = require('hmc-win32')
+                path = await hmc.getProcessFilePath2(pid)
+                path = path ?? ''
+                path = path.startsWith('\\Device\\HarddiskVolume') ? '' : path //过滤掉 getProcessFilePath2 错误的path
             } else {
-                commandStr = `lsof -p ${pid} -a -w -d txt -Fn|awk 'NR==3{print}'|sed "s/n//"`;
-                resStr = await Command.exec(commandStr);
+                const commandStr = `lsof -p ${pid} -a -w -d txt -Fn|awk 'NR==3{print}'|sed "s/n//"`
+                const resStr = await Shell.exec(commandStr)
+                path = resStr.trim().split('\n')[0]
             }
-            path = resStr.trim().split("\n")[0];
-            return path.trim();
+
+            return path.trim()
         } catch {
-            return null;
+            return null
         }
     }
 
@@ -103,7 +108,7 @@ export default class ProcessExtend {
         }
         command += "|grep -v .dylib|awk '{print $1,$2,$3,$10}'";
         try {
-            let str =  await Command.sudoExec(command);
+            let str =  await Shell.sudoExec(command);
             str = str.trim();
             if(!str){
                 return [];
@@ -124,36 +129,36 @@ export default class ProcessExtend {
 
     }
 
-    static async getListForWindows(options={}) {
-        let command = ' Get-WmiObject -Class Win32_Process -Filter ';
+    static async getListForWindows(options = {}) {
+        let command = ' Get-WmiObject -Class Win32_Process -Filter '
         if (options) {
-            if(options.directory){
+            if (options.directory) {
                 let formatDir = options.directory.replaceAll('\\', '\\\\')
                 //这里只能是ExecutablePath不能是Path，因为Path是PowerShell的'ScriptProperty'
-                command += `"ExecutablePath like '${formatDir}%'"`;
+                command += `"ExecutablePath like '${formatDir}%'"`
             }
         }
-        command += " |Select-Object Name,ProcessId,ParentProcessId,ExecutablePath | Format-List | Out-String -Width 999";
+        command += ' |Select-Object Name,ProcessId,ParentProcessId,ExecutablePath | Format-List | Out-String -Width 999'
 
         try {
-            let str =  await Command.exec(command,{shell: 'powershell'});
-            str = str.trim();
-            if(!str){
-                return [];
+            let str = await Shell.exec(command, { shell: PowerShell })
+            str = str.trim()
+            if (!str) {
+                return []
             }
-            let list = str.split(/\r?\n\r?\n/);
+            let list = str.split(/\r?\n\r?\n/)
             list = list.map(item => {
-                let lineArr = item.split(/\r?\n/);
+                let lineArr = item.split(/\r?\n/)
 
-                let arr = lineArr.map(line =>{
+                let arr = lineArr.map(line => {
                     return line.split(' : ')[1]?.trim()
-                });
+                })
 
                 let name, pid, ppid, path;
-                [name, pid, ppid, path] = arr;
-                return {name, pid, ppid, path};
-            });
-            return list;
+                [name, pid, ppid, path] = arr
+                return { name, pid, ppid, path }
+            })
+            return list
         } catch (e) {
             return []
         }

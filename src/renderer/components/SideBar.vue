@@ -1,8 +1,8 @@
 <template>
   <div class="sidebar">
-    <div class="draggable" @dblclick="dblclick"></div>
-    <div class="logo-container">
+    <div ref='logoContainer' class="draggable logo-container" @dblclick="dblclick">
       <img src="@/renderer/assets/img/icons/icon-trans.png" alt="icon" />
+      <span class='color-text'>{{ APP_NAME }} </span>
     </div>
     <a-menu mode="vertical" @select="menuItemSelect" v-model:selectedKeys="selectedKeys">
       <div style="flex: 1" class="non-draggable">
@@ -32,6 +32,7 @@
 </template>
 
 <script setup>
+import { APP_NAME } from '@/shared/utils/constant'
 import {
   AppstoreTwoTone,
   ExclamationCircleTwoTone,
@@ -40,16 +41,21 @@ import {
   SettingTwoTone,
   ToolTwoTone
 } from "@ant-design/icons-vue";
-import {defineAsyncComponent, ref} from 'vue'
+import { defineAsyncComponent, onMounted, ref } from 'vue'
 import {useRouter} from "vue-router";
 const router = useRouter();
 const selectedKeys = ref(['/']);
 import { getCurrentWindow, switchMaximize } from '@/shared/utils/window'
-import { isWindows } from '@/main/utils/utils'
+import { isWindows ,isMacOS} from '@/main/utils/utils'
 
 const dblclick = () => {
   if (!isWindows) switchMaximize(getCurrentWindow())
 }
+
+const logoContainer = ref()
+onMounted(() => {
+  if (isMacOS) logoContainer.value.style.paddingTop = '50px'
+})
 
 const AMenu = defineAsyncComponent(() => {
   return new Promise((resolve) => {

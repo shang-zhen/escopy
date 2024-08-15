@@ -10,7 +10,7 @@ import GetPath from '@/shared/utils/GetPath'
 import LocalInstall from '@/main/core/software/LocalInstall'
 import FsUtil from '@/main/utils/FsUtil'
 import GetAppPath from '@/main/utils/GetAppPath'
-import Command from '@/main/utils/Command'
+import Shell from '@/main/utils/Shell'
 import { extractZip } from '@/main/utils/extract'
 
 const app = electronRequire('app')
@@ -40,7 +40,7 @@ export default class App {
             await this.updateMacCoreSubDir(['Library'])
         }
 
-        await this.moveInitFiles(['downloads', 'www'])
+        await this.moveInitFiles(['downloads', 'www', 'custom'])
         await this.createCoreSubDir(['software', 'database', 'bin', `${TEMP_DIR_NAME}/php`])
 
         if (!softwareDirExists) { //目录不存在说明是第一次安装，不是覆盖安装
@@ -88,6 +88,7 @@ export default class App {
         if (isMacOS) {
             await this.updateMacCoreSubDir(['Library'])
         }
+        await this.moveInitFiles(['downloads', 'www', 'custom'])
 
         //下面update逻辑，用于更新 UserCoreDir
         const updateDir = Path.Join(GetAppPath.getCoreDir(), 'update')
@@ -116,7 +117,7 @@ export default class App {
             if (!await DirUtil.Exists(target)) {
                 await DirUtil.Create(target)
             }
-            await Command.exec(`rsync -a ${source}/* ${target}`)
+            await Shell.exec(`rsync -a ${source}/* ${target}`)
             await DirUtil.Delete(source)
         }
     }
@@ -135,7 +136,7 @@ export default class App {
     }
 
     /**
-     * 将initFiles目录下的文件（文件夹）移动到用户操作的核心目录
+     * 将initFiles目录下的文件（文件夹）移动到用户操作的核心目录，如果已存在，不会覆盖。
      * @param files
      */
     static async moveInitFiles(files = []) {
