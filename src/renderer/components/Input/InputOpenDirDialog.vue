@@ -11,9 +11,8 @@
 <script setup>
 import { computed } from 'vue'
 import { FolderOpenFilled } from '@ant-design/icons-vue'
-import FileDialog from '@/main/utils/FileDialog'
 
-const props = defineProps(['value', 'toForwardSlash'])
+const props = defineProps({ value: String, toForwardSlash: Boolean })
 const emit = defineEmits(['update:value'])
 
 const val = computed({
@@ -25,8 +24,8 @@ const val = computed({
   }
 })
 
-let selectPath = () => {
-  let path = FileDialog.showOpenDirectory(val.value)
+const selectPath = async () => {
+  let path = await window.api.callStatic('FileDialog', 'showOpenDirectory')
   if (path) {
     if (props.toForwardSlash) {
       path = path.replaceSlash()
@@ -34,9 +33,6 @@ let selectPath = () => {
     val.value = path
   }
 }
-
 </script>
 
-<style scoped>
-</style>
-
+<style scoped></style>

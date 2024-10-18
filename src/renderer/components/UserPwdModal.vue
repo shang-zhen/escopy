@@ -25,15 +25,10 @@ import SystemExtend from '@/main/utils/SystemExtend'
 import MessageBox from '@/renderer/utils/MessageBox'
 import { useMainStore } from '@/renderer/store'
 import { mt, t } from '@/renderer/utils/i18n'
-
+const call = window.api.call
 const store = useMainStore()
 
-const props = defineProps({
-  show: Boolean,
-  rightPwd: String,
-  cancelIsExit: Boolean
-})
-
+const props = defineProps({ show: Boolean, rightPwd: String, cancelIsExit: Boolean })
 const emit = defineEmits(['update:show', 'update:rightPwd'])
 
 const visible = computed({
@@ -79,7 +74,7 @@ const saveUserPwd = async () => {
       store.loading = false;
     } catch (error) {
       await MessageBox.error(error.message ?? error,t('errorOccurredDuring', [t('initializing')]));
-      App.exit();
+      await call('appExit')
     }
   }
   okButtonLoading.value = false;
@@ -87,9 +82,9 @@ const saveUserPwd = async () => {
 
 const cancel = () => {
   if (props.cancelIsExit) {
-    App.exit();
+    call('appExit')
   } else {
-    visible.value = false;
+    visible.value = false
   }
 }
 </script>

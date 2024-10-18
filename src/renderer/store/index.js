@@ -8,13 +8,12 @@ import { t } from '@/renderer/utils/i18n'
 import SystemTheme from '@/main/utils/SystemTheme'
 import { theme } from 'ant-design-vue'
 import { setTwoToneColor } from '@ant-design/icons-vue'
-import { color } from '@/renderer/utils/constant'
+import { colorConst } from '@/shared/utils/constant'
 
 export const useMainStore = defineStore('main', {
     state: () => {
         return {
             softwareList: [], //软件列表
-            nginxServer: null,
             softwareTypeSelected: '',
             loading: false,
             loadingTip: 'Loading',
@@ -44,7 +43,6 @@ export const useMainStore = defineStore('main', {
                 const Installed = await Software.IsInstalled(item)
                 return { ...item, Installed }
             }))
-            this.nginxServer = this.softwareList.find((item) => item.Name === 'Nginx')
         },
         async setSettings(key, callback = null) {
             const originVal = Settings.get(key)
@@ -73,13 +71,13 @@ export const useMainStore = defineStore('main', {
          changeTheme(modeStr, primaryColor) {
             const isDark = modeStr === 'dark' || (modeStr === 'system' && SystemTheme.isDarkModel())
             let customToken = {
-                colorBgLayout: color.light.bgColor,
+                colorBgLayout: colorConst.light.bgColor,
                 colorPrimary: primaryColor,
                 borderRadius: 5
             }
 
             let darkToken = {
-                colorBgLayout: color.dark.bgColor,
+                colorBgLayout: colorConst.dark.bgColor,
                 colorBgContainer: '#303030',
                 colorBorderSecondary: 'rgba(255, 255, 255, 0.06)',
                 colorSplit: 'rgba(255, 255, 255, 0.06)',

@@ -46,17 +46,30 @@ export function sleep(ms) {
  * @returns {string}
  */
 export function replaceSlash(str) {
-    return str.replaceAll("\\", "/")
+    return str.replaceAll('\\', '/')
 }
 
 export function getFileSizeText(byte, defaultVal = 0) {
     byte = byte ? byte : defaultVal
     if (byte > 1024 * 1024) {
-        return parseInt(byte / (1024 * 1024)) + 'MB'
+        return (byte / (1024 * 1024)).toFixed(1) + 'MB'
     }
     return parseInt(byte / 1024) + 'KB'
 }
 
 export function isRendererProcess() {
     return process.type === 'renderer'
+}
+
+/**
+ *
+ * @param error {Error}
+ * @returns {Error}
+ */
+export function getIpcError(error) {
+    const regx = /':\s(\w*Error):\s(.*)/
+    const match = error.message.match(regx)
+    const err = new Error(match[2])
+    err.name = match[1]
+    return err
 }

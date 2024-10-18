@@ -1,10 +1,9 @@
 import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
-import remoteMain from '@electron/remote/main'
 import Store from 'electron-store'
 import MainWindow from '@/main/MainWindow'
-import { ipcListen } from '@/main/ipc'
+import '@/main/ipcListen'
 import { extendPrototype } from '@/shared/utils/utils'
 import I18n from '@/main/i18n/I18n'
 
@@ -36,7 +35,6 @@ async function createMainWindow() {
             nodeIntegration: true,
             contextIsolation: false,
             webSecurity: false,
-            nodeIntegrationInWorker: true
         }
     })
 
@@ -61,15 +59,12 @@ async function createMainWindow() {
     } else {
         mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
     }
-    remoteMain.enable(mainWindow.webContents)
     MainWindow.init(mainWindow)
 }
 
 function onReady() {
     app.on('ready', async () => {
         createMainWindow()
-        Store.initRenderer()
-        remoteMain.initialize()
         Store.initRenderer()
         I18n.init()
     })
@@ -103,5 +98,4 @@ app.on('window-all-closed', () => {
 })
 
 app.commandLine.appendSwitch('--no-sandbox')
-ipcListen()
 extendPrototype()
